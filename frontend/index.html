@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FACE RECOGNITION ACCELERATOR | CPU vs GPU Architecture Performance Analysis</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            900: '#1e1b4b'
+                        },
+                        cpu: '#06b6d4', // Cyan for CPU
+                        gpu: '#10b981', // Emerald for Intel Xe / GPU
+                        dark: {
+                            800: '#1e293b',
+                            900: '#0f172a',
+                            950: '#020617'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-dark-950 text-slate-100 min-h-screen flex flex-col font-sans antialiased">
+
+    <!-- Top Navigation Bar -->
+    <header class="border-b border-slate-800 bg-dark-900/90 backdrop-blur sticky top-0 z-50 px-6 py-3.5 flex items-center justify-between shadow-md">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 via-cpu to-gpu flex items-center justify-center text-white shadow-lg shadow-brand-500/20">
+                <i class="fa-solid fa-microchip text-xl"></i>
+            </div>
+            <div>
+                <h1 class="font-extrabold text-lg tracking-tight bg-gradient-to-r from-white via-slate-200 to-indigo-300 bg-clip-text text-transparent">
+                    FACE RECOGNITION ACCELERATOR
+                </h1>
+                <p class="text-xs text-slate-400 font-medium">
+                    CNN-Based Telugu Celebrity Face Recognition & COA Performance Analysis
+                </p>
+            </div>
+        </div>
+
+        <!-- Hardware Status Pills -->
+        <div id="topHardwareBar" class="hidden md:flex items-center space-x-3 text-xs">
+            <div class="flex items-center space-x-1.5 px-3 py-1 rounded-full bg-slate-800/80 border border-slate-700/60">
+                <span class="w-2 h-2 rounded-full bg-cpu animate-pulse"></span>
+                <span class="text-slate-400">CPU:</span>
+                <span id="topCpuName" class="font-semibold text-slate-200">Detecting...</span>
+            </div>
+            <div class="flex items-center space-x-1.5 px-3 py-1 rounded-full bg-slate-800/80 border border-slate-700/60">
+                <span class="w-2 h-2 rounded-full bg-gpu"></span>
+                <span class="text-slate-400">GPU:</span>
+                <span id="topGpuName" class="font-semibold text-slate-200">Detecting...</span>
+            </div>
+            <div id="topBackendBadge" class="px-2.5 py-1 rounded-full bg-indigo-900/50 border border-indigo-700/50 text-indigo-300 font-medium">
+                Backend: Scanning...
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Navigation Tabs -->
+    <nav class="bg-dark-900 border-b border-slate-800/80 px-6 overflow-x-auto scrollbar-none">
+        <div class="flex space-x-2 py-2" id="navTabs">
+            <button onclick="switchTab('recognition')" data-tab="recognition" class="tab-btn active px-4 py-2 rounded-lg text-sm font-semibold flex items-center space-x-2 transition-all">
+                <i class="fa-solid fa-id-card-clip text-brand-500"></i>
+                <span>Face Recognition</span>
+            </button>
+            <button onclick="switchTab('dashboard')" data-tab="dashboard" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold flex items-center space-x-2 transition-all">
+                <i class="fa-solid fa-gauge-high text-emerald-400"></i>
+                <span>CPU vs GPU Dashboard</span>
+                <span class="px-1.5 py-0.5 rounded text-[10px] bg-emerald-500/20 text-emerald-300 font-bold ml-1">CORE</span>
+            </button>
+            <button onclick="switchTab('dataset')" data-tab="dataset" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold flex items-center space-x-2 transition-all">
+                <i class="fa-solid fa-users text-amber-400"></i>
+                <span>Telugu Celebrities</span>
+                <span id="navCelebCount" class="text-xs px-1.5 py-0.2 bg-slate-800 rounded-full text-slate-400">18</span>
+            </button>
+            <button onclick="switchTab('graphs')" data-tab="graphs" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold flex items-center space-x-2 transition-all">
+                <i class="fa-solid fa-chart-line text-cyan-400"></i>
+                <span>Analytics & Graphs</span>
+            </button>
+            <button onclick="switchTab('coa')" data-tab="coa" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold flex items-center space-x-2 transition-all">
+                <i class="fa-solid fa-network-wired text-purple-400"></i>
+                <span>COA & Memory Architecture</span>
+            </button>
+            <button onclick="switchTab('parallel')" data-tab="parallel" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold flex items-center space-x-2 transition-all">
+                <i class="fa-solid fa-arrows-split-up-and-left text-rose-400"></i>
+                <span>Parallel Simulator</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content Container -->
+    <main class="flex-1 p-6 max-w-7xl w-full mx-auto">
+
+        <!-- ========================================== -->
+        <!-- TAB 1: FACE RECOGNITION & EXPERIMENT A -->
+        <!-- ========================================== -->
+        <section id="tab-recognition" class="tab-content space-y-6">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-slate-800">
+                <div>
+                    <h2 class="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+                        <i class="fa-solid fa-camera text-brand-500"></i> Telugu Celebrity Face Recognition
+                    </h2>
+                    <p class="text-sm text-slate-400">
+                        Upload or select a celebrity photograph. CNN extracts 512-D embeddings and compares latency on CPU vs GPU.
+                    </p>
+                </div>
+                <!-- Threshold slider -->
+                <div class="flex items-center space-x-3 bg-slate-900 border border-slate-800 px-4 py-2 rounded-xl">
+                    <span class="text-xs text-slate-400">Cosine Threshold:</span>
+                    <input type="range" id="thresholdSlider" min="0.20" max="0.80" step="0.02" value="0.38" class="w-28 accent-brand-500">
+                    <span id="thresholdVal" class="text-xs font-mono font-bold text-brand-400">0.38</span>
+                </div>
+            </div>
+
+            <!-- Upload Area & Quick Celebrity Pickers -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Left: Upload Box -->
+                <div class="bg-dark-900 border border-slate-800 rounded-2xl p-6 flex flex-col justify-between shadow-xl">
+                    <div>
+                        <h3 class="font-semibold text-sm text-slate-300 mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-cloud-arrow-up text-indigo-400"></i> Upload Photograph
+                        </h3>
+                        <div id="dropZone" class="border-2 border-dashed border-slate-700 hover:border-brand-500 rounded-xl p-8 text-center cursor-pointer transition-all bg-slate-950/40">
+                            <i class="fa-solid fa-image text-4xl text-slate-500 mb-3"></i>
+                            <p class="text-sm text-slate-300 font-medium">Drag & drop or <span class="text-brand-400 underline">Browse File</span></p>
+                            <p class="text-xs text-slate-500 mt-1">Supports JPG, PNG, JPEG, WEBP</p>
+                            <input type="file" id="fileInput" accept="image/*" class="hidden">
+                        </div>
+                    </div>
+
+                    <!-- Quick Pick Telugu Celebrities -->
+                    <div class="mt-4">
+                        <p class="text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">Quick Sample Test:</p>
+                        <div class="flex flex-wrap gap-2" id="samplePicksContainer">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+
+                    <button id="recognizeBtn" disabled class="mt-5 w-full py-3 bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-lg shadow-brand-500/20 transition-all flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-bolt"></i>
+                        <span>Run Recognition & CPU/GPU Inference</span>
+                    </button>
+                </div>
+
+                <!-- Middle: Detection & Visual Side-by-Side -->
+                <div class="bg-dark-900 border border-slate-800 rounded-2xl p-6 flex flex-col justify-between shadow-xl">
+                    <h3 class="font-semibold text-sm text-slate-300 mb-3 flex items-center justify-between">
+                        <span class="flex items-center gap-2"><i class="fa-solid fa-vector-square text-cyan-400"></i> Face Localization & Crop</span>
+                        <span id="detectionBadge" class="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-400">Ready</span>
+                    </h3>
+
+                    <div class="grid grid-cols-2 gap-4 flex-1 items-center">
+                        <div class="flex flex-col items-center">
+                            <span class="text-xs text-slate-400 mb-2 font-mono">Annotated Bounding Box</span>
+                            <div class="w-full aspect-square rounded-xl bg-slate-950/60 border border-slate-800 flex items-center justify-center overflow-hidden">
+                                <img id="annotatedPreview" class="w-full h-full object-contain hidden">
+                                <span id="annotatedPlaceholder" class="text-xs text-slate-600 text-center p-4">No image uploaded</span>
+                            </div>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <span class="text-xs text-slate-400 mb-2 font-mono">Aligned 112×112 Crop</span>
+                            <div class="w-full aspect-square rounded-xl bg-slate-950/60 border border-slate-800 flex items-center justify-center overflow-hidden">
+                                <img id="cropPreview" class="w-full h-full object-contain hidden">
+                                <span id="cropPlaceholder" class="text-xs text-slate-600 text-center p-4">Awaiting face</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 p-3 rounded-xl bg-slate-950/50 border border-slate-800/80 text-xs text-slate-400 flex items-center justify-between">
+                        <span>OpenCV YuNet Detection Time:</span>
+                        <span id="detTimeVal" class="font-mono font-bold text-cyan-400">-- ms</span>
+                    </div>
+                </div>
+
+                <!-- Right: Identity Match & Candidate Probabilities -->
+                <div class="bg-dark-900 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-col justify-between">
+                    <div>
+                        <h3 class="font-semibold text-sm text-slate-300 mb-3 flex items-center justify-between">
+                            <span class="flex items-center gap-2"><i class="fa-solid fa-award text-amber-400"></i> Recognition Result</span>
+                            <span id="matchStatusPill" class="text-xs px-2.5 py-0.5 rounded-full font-bold bg-slate-800 text-slate-400">Idle</span>
+                        </h3>
+
+                        <!-- Identity Card -->
+                        <div class="p-4 rounded-xl bg-gradient-to-br from-slate-950 to-slate-900 border border-slate-800 mb-4">
+                            <span class="text-[11px] text-slate-500 uppercase tracking-wider block font-semibold">Recognized Identity</span>
+                            <div id="recognizedName" class="text-2xl font-black text-white mt-1 tracking-tight truncate">
+                                Awaiting Inference
+                            </div>
+                            <div class="flex items-center justify-between mt-3 text-xs">
+                                <span class="text-slate-400">Similarity Score:</span>
+                                <span id="similarityVal" class="font-mono font-bold text-lg text-emerald-400">--</span>
+                            </div>
+                            <div class="w-full bg-slate-800 h-2 rounded-full mt-1.5 overflow-hidden">
+                                <div id="similarityBar" class="bg-gradient-to-r from-brand-500 to-emerald-400 h-full w-0 transition-all duration-500"></div>
+                            </div>
+                        </div>
+
+                        <!-- Top 5 Candidate Matches -->
+                        <div class="space-y-2">
+                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Top Candidate Matches</span>
+                            <div id="topMatchesList" class="space-y-1.5 text-xs">
+                                <div class="text-slate-600 text-center py-4">No match data yet</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Experiment A: Single Image CPU vs GPU Execution Results -->
+            <div class="bg-dark-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-bold text-base text-white flex items-center gap-2">
+                        <i class="fa-solid fa-stopwatch text-indigo-400"></i>
+                        <span>Experiment A: Single-Image Inference Execution Comparison</span>
+                    </h3>
+                    <div id="fasterDevicePill" class="text-xs px-3 py-1 rounded-full font-bold bg-slate-800 text-slate-300">
+                        Faster Device: Pending
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <!-- CPU Latency Card -->
+                    <div class="p-4 rounded-xl bg-slate-950/70 border border-cpu/30 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between text-xs text-cpu font-bold">
+                                <span><i class="fa-solid fa-microchip"></i> CPU Pure Inference</span>
+                                <span class="px-1.5 py-0.5 rounded bg-cpu/10">Active</span>
+                            </div>
+                            <div id="cpuLatencyVal" class="text-3xl font-black text-white font-mono mt-2">-- ms</div>
+                            <p id="cpuDeviceLabel" class="text-[11px] text-slate-400 mt-1 truncate">13th Gen Intel Core</p>
+                        </div>
+                    </div>
+
+                    <!-- GPU Latency Card -->
+                    <div class="p-4 rounded-xl bg-slate-950/70 border border-gpu/30 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between text-xs text-gpu font-bold">
+                                <span><i class="fa-solid fa-bolt"></i> GPU Pure Inference</span>
+                                <span id="gpuStatusLabel" class="px-1.5 py-0.5 rounded bg-gpu/10">Intel Iris Xe</span>
+                            </div>
+                            <div id="gpuLatencyVal" class="text-3xl font-black text-white font-mono mt-2">-- ms</div>
+                            <p id="gpuDeviceLabel" class="text-[11px] text-slate-400 mt-1 truncate">Intel Iris Xe Graphics</p>
+                        </div>
+                    </div>
+
+                    <!-- Speedup Card -->
+                    <div class="p-4 rounded-xl bg-slate-950/70 border border-brand-500/30 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between text-xs text-indigo-400 font-bold">
+                                <span><i class="fa-solid fa-gauge"></i> Measured Speedup</span>
+                                <span class="text-[10px] text-slate-500">CPU / GPU</span>
+                            </div>
+                            <div id="singleSpeedupVal" class="text-3xl font-black text-white font-mono mt-2">-- x</div>
+                            <p class="text-[11px] text-slate-400 mt-1">Relative performance</p>
+                        </div>
+                    </div>
+
+                    <!-- Architectural Insight -->
+                    <div class="p-4 rounded-xl bg-slate-950/70 border border-slate-800 flex flex-col justify-between">
+                        <div>
+                            <span class="text-xs font-bold text-amber-400 flex items-center gap-1.5">
+                                <i class="fa-solid fa-lightbulb"></i> Computer Architecture Note
+                            </span>
+                            <p id="singleArchNote" class="text-xs text-slate-400 mt-2 leading-relaxed">
+                                Run inference above to view actual measured architectural comparison.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- TAB 2: CPU vs GPU PERFORMANCE DASHBOARD -->
+        <!-- ========================================== -->
+        <section id="tab-dashboard" class="tab-content hidden space-y-6">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-slate-800">
+                <div>
+                    <h2 class="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+                        <i class="fa-solid fa-gauge-high text-emerald-400"></i> CPU vs GPU Performance Benchmarking Dashboard
+                    </h2>
+                    <p class="text-sm text-slate-400">
+                        Compulsory Performance Evaluation: Genuine hardware inspection, real-time metrics, and parallel CNN batch benchmarking.
+                    </p>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button onclick="refreshHardware()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                        <i class="fa-solid fa-arrows-rotate"></i> Re-inspect Hardware
+                    </button>
+                    <a href="/api/benchmark/export-csv" class="px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-600 text-xs font-semibold text-white flex items-center gap-1.5">
+                        <i class="fa-solid fa-file-csv"></i> Export CSV
+                    </a>
+                </div>
+            </div>
+
+            <!-- Hardware Specifications Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- CPU Info -->
+                <div class="bg-dark-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+                    <div class="flex items-center justify-between text-xs text-cpu font-bold mb-2">
+                        <span class="flex items-center gap-1.5"><i class="fa-solid fa-microchip"></i> CPU Specification</span>
+                        <span class="w-2 h-2 rounded-full bg-cpu"></span>
+                    </div>
+                    <h4 id="dashCpuName" class="text-base font-bold text-white truncate">13th Gen Intel Core i5-13500H</h4>
+                    <div class="mt-3 space-y-1.5 text-xs text-slate-400 font-mono">
+                        <div class="flex justify-between"><span>Physical Cores:</span> <span id="dashCpuCores" class="text-slate-200">12 Cores</span></div>
+                        <div class="flex justify-between"><span>Logical Threads:</span> <span id="dashCpuThreads" class="text-slate-200">16 Threads</span></div>
+                        <div class="flex justify-between"><span>Architecture:</span> <span id="dashCpuArch" class="text-slate-200">AMD64 / x86_64</span></div>
+                    </div>
+                </div>
+
+                <!-- GPU Info -->
+                <div class="bg-dark-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+                    <div class="flex items-center justify-between text-xs text-gpu font-bold mb-2">
+                        <span class="flex items-center gap-1.5"><i class="fa-solid fa-bolt"></i> Integrated GPU</span>
+                        <span class="w-2 h-2 rounded-full bg-gpu"></span>
+                    </div>
+                    <h4 id="dashGpuName" class="text-base font-bold text-white truncate">Intel(R) Iris(R) Xe Graphics</h4>
+                    <div class="mt-3 space-y-1.5 text-xs text-slate-400 font-mono">
+                        <div class="flex justify-between"><span>Driver Version:</span> <span id="dashGpuDriver" class="text-slate-200">31.0.101.4032</span></div>
+                        <div class="flex justify-between"><span>Shared Memory:</span> <span id="dashGpuRam" class="text-slate-200">1024 MB</span></div>
+                        <div class="flex justify-between"><span>Type:</span> <span class="text-slate-200">Integrated iGPU</span></div>
+                    </div>
+                </div>
+
+                <!-- Backend & Execution Provider -->
+                <div class="bg-dark-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+                    <div class="flex items-center justify-between text-xs text-indigo-400 font-bold mb-2">
+                        <span class="flex items-center gap-1.5"><i class="fa-solid fa-gears"></i> Acceleration Backend</span>
+                        <span id="dashGpuSupportedBadge" class="px-1.5 py-0.5 rounded text-[10px] bg-emerald-500/20 text-emerald-400">Verified</span>
+                    </div>
+                    <h4 id="dashBackendName" class="text-base font-bold text-white truncate">OpenVINO / DirectML</h4>
+                    <div class="mt-3 space-y-1.5 text-xs text-slate-400 font-mono">
+                        <div class="flex justify-between"><span>OpenVINO Devices:</span> <span id="dashOvDevices" class="text-slate-200">CPU, GPU</span></div>
+                        <div class="flex justify-between"><span>DirectML:</span> <span id="dashDmlStatus" class="text-slate-200">Available</span></div>
+                        <div class="flex justify-between"><span>NVIDIA CUDA:</span> <span id="dashCudaStatus" class="text-slate-400">N/A (Intel)</span></div>
+                    </div>
+                </div>
+
+                <!-- Live Utilization -->
+                <div class="bg-dark-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+                    <div class="flex items-center justify-between text-xs text-amber-400 font-bold mb-2">
+                        <span class="flex items-center gap-1.5"><i class="fa-solid fa-chart-pie"></i> Live System Load</span>
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    </div>
+                    <div class="space-y-3 mt-2">
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-slate-400">CPU Utilization:</span>
+                                <span id="dashLiveCpu" class="font-mono font-bold text-cpu">0%</span>
+                            </div>
+                            <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                                <div id="dashLiveCpuBar" class="bg-cpu h-full w-0 transition-all duration-300"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-slate-400">RAM Usage:</span>
+                                <span id="dashLiveRam" class="font-mono font-bold text-amber-400">0%</span>
+                            </div>
+                            <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                                <div id="dashLiveRamBar" class="bg-amber-400 h-full w-0 transition-all duration-300"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- EXPERIMENT B: LARGE-SCALE CNN BATCH BENCHMARK -->
+            <div class="bg-dark-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+                    <div>
+                        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-layer-group text-brand-500"></i>
+                            <span>Experiment B: Large-Scale Parallel CNN Workload Benchmark</span>
+                        </h3>
+                        <p class="text-xs text-slate-400 mt-0.5">
+                            Demonstrates GPU parallel processing throughput versus CPU sequential execution across variable workload and batch sizes.
+                        </p>
+                    </div>
+
+                    <!-- Workload & Batch Size Selectors -->
+                    <div class="flex flex-wrap items-center gap-3">
+                        <div class="flex items-center space-x-2 bg-slate-950 border border-slate-800 px-3 py-1.5 rounded-xl">
+                            <span class="text-xs text-slate-400">Workload:</span>
+                            <select id="workloadSelect" class="bg-transparent text-xs font-bold text-white focus:outline-none">
+                                <option value="10">10 images</option>
+                                <option value="50" selected>50 images</option>
+                                <option value="100">100 images</option>
+                                <option value="500">500 images</option>
+                                <option value="1000">1,000 images</option>
+                                <option value="2000">2,000 images</option>
+                            </select>
+                        </div>
+
+                        <div class="flex items-center space-x-2 bg-slate-950 border border-slate-800 px-3 py-1.5 rounded-xl">
+                            <span class="text-xs text-slate-400">Batch Size:</span>
+                            <select id="batchSelect" class="bg-transparent text-xs font-bold text-white focus:outline-none">
+                                <option value="1">1 (Single)</option>
+                                <option value="8" selected>8</option>
+                                <option value="16">16</option>
+                                <option value="32">32</option>
+                                <option value="64">64</option>
+                            </select>
+                        </div>
+
+                        <button id="runBatchBenchmarkBtn" onclick="runBatchBenchmark()" class="px-5 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 font-bold text-xs text-white rounded-xl shadow-lg shadow-emerald-600/20 flex items-center gap-2 transition-all">
+                            <i class="fa-solid fa-play"></i>
+                            <span>Execute Benchmark</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Benchmark Progress Bar (hidden by default) -->
+                <div id="benchmarkLoading" class="hidden space-y-2 py-4">
+                    <div class="flex justify-between text-xs text-slate-400 font-medium">
+                        <span id="benchmarkStatusText">Warming up CPU and GPU inference pipelines...</span>
+                        <span id="benchmarkPercent">Running...</span>
+                    </div>
+                    <div class="w-full bg-slate-950 h-2.5 rounded-full overflow-hidden border border-slate-800">
+                        <div class="bg-gradient-to-r from-cpu via-brand-500 to-gpu h-full w-full animate-pulse"></div>
+                    </div>
+                </div>
+
+                <!-- Real-time Benchmark KPI Metrics Cards -->
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-4" id="benchmarkKpiGrid">
+                    <div class="p-4 rounded-xl bg-slate-950 border border-slate-800">
+                        <span class="text-[11px] text-slate-500 uppercase font-semibold block">CPU Time</span>
+                        <div id="kpiCpuTime" class="text-2xl font-black text-cpu font-mono mt-1">-- ms</div>
+                        <span id="kpiCpuThroughput" class="text-xs text-slate-400 mt-0.5 block">-- FPS</span>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-slate-950 border border-slate-800">
+                        <span class="text-[11px] text-slate-500 uppercase font-semibold block">GPU Time</span>
+                        <div id="kpiGpuTime" class="text-2xl font-black text-gpu font-mono mt-1">-- ms</div>
+                        <span id="kpiGpuThroughput" class="text-xs text-slate-400 mt-0.5 block">-- FPS</span>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-slate-950 border border-slate-800">
+                        <span class="text-[11px] text-slate-500 uppercase font-semibold block">Calculated Speedup</span>
+                        <div id="kpiSpeedup" class="text-2xl font-black text-indigo-400 font-mono mt-1">-- x</div>
+                        <span id="kpiImprovement" class="text-xs text-slate-400 mt-0.5 block">--% Improvement</span>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-slate-950 border border-slate-800">
+                        <span class="text-[11px] text-slate-500 uppercase font-semibold block">Faster Device</span>
+                        <div id="kpiWinner" class="text-2xl font-black text-amber-400 mt-1">--</div>
+                        <span class="text-xs text-slate-500 mt-0.5 block">Workload Winner</span>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 col-span-2 md:col-span-1">
+                        <span class="text-[11px] text-slate-500 uppercase font-semibold block">Memory Delta</span>
+                        <div id="kpiMemory" class="text-2xl font-black text-slate-200 font-mono mt-1">-- MB</div>
+                        <span class="text-xs text-slate-500 mt-0.5 block">Working Set</span>
+                    </div>
+                </div>
+
+                <!-- Detailed Benchmark Results Table -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-xs text-left">
+                        <thead class="text-[11px] uppercase tracking-wider text-slate-400 bg-slate-950 border-b border-slate-800">
+                            <tr>
+                                <th class="p-3">Execution Metric</th>
+                                <th class="p-3 text-cpu">CPU (Intel Core i5-13500H)</th>
+                                <th class="p-3 text-gpu">GPU (Intel Iris Xe Graphics)</th>
+                                <th class="p-3">Performance Formula</th>
+                                <th class="p-3">Result Analysis</th>
+                            </tr>
+                        </thead>
+                        <tbody id="detailedBenchmarkTableBody" class="divide-y divide-slate-800/60 font-mono">
+                            <tr>
+                                <td class="p-3 font-sans font-medium text-slate-300">Total Inference Time</td>
+                                <td id="tblCpuTime" class="p-3 text-cpu font-bold">--</td>
+                                <td id="tblGpuTime" class="p-3 text-gpu font-bold">--</td>
+                                <td class="p-3 text-slate-500">Pure Latency Sum</td>
+                                <td id="tblTimeComp" class="p-3 text-slate-300 font-sans">--</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 font-sans font-medium text-slate-300">Throughput (FPS)</td>
+                                <td id="tblCpuFps" class="p-3 text-cpu">--</td>
+                                <td id="tblGpuFps" class="p-3 text-gpu">--</td>
+                                <td class="p-3 text-slate-500 font-sans">Total Images / Total Seconds</td>
+                                <td id="tblFpsComp" class="p-3 text-slate-300 font-sans">--</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 font-sans font-medium text-slate-300">Mean Step Latency</td>
+                                <td id="tblCpuMean" class="p-3">--</td>
+                                <td id="tblGpuMean" class="p-3">--</td>
+                                <td class="p-3 text-slate-500">&Sigma;(latencies) / N</td>
+                                <td class="p-3 text-slate-400 font-sans">Per-batch average</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 font-sans font-medium text-slate-300">Standard Deviation (&sigma;)</td>
+                                <td id="tblCpuStd" class="p-3">--</td>
+                                <td id="tblGpuStd" class="p-3">--</td>
+                                <td class="p-3 text-slate-500">&radic;Var(latency)</td>
+                                <td class="p-3 text-slate-400 font-sans">Execution jitter</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 font-sans font-medium text-slate-300">Memory Working Set</td>
+                                <td id="tblCpuMem" class="p-3">--</td>
+                                <td id="tblGpuMem" class="p-3">--</td>
+                                <td class="p-3 text-slate-500 font-sans">RSS Process Peak</td>
+                                <td class="p-3 text-slate-400 font-sans">Buffer allocations</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Architectural Explanation Box -->
+                <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 text-xs">
+                    <span class="font-bold text-amber-400 flex items-center gap-1.5 mb-1">
+                        <i class="fa-solid fa-graduation-cap"></i> Computer Architecture Analysis: Why this happened
+                    </span>
+                    <p id="benchmarkArchExplanation" class="text-slate-300 leading-relaxed">
+                        Select a workload and batch size above and execute the benchmark to generate verified hardware execution metrics.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- TAB 3: TELUGU CELEBRITY DATASET -->
+        <!-- ========================================== -->
+        <section id="tab-dataset" class="tab-content hidden space-y-6">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-slate-800">
+                <div>
+                    <h2 class="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+                        <i class="fa-solid fa-users text-amber-400"></i> Telugu Celebrity Face Dataset
+                    </h2>
+                    <p class="text-sm text-slate-400">
+                        Pre-populated with prominent Telugu stars. Manage identities, add images, or import a full ZIP archive.
+                    </p>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button onclick="openModal('addCelebModal')" class="px-3.5 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-xs font-bold text-white flex items-center gap-1.5 shadow-md">
+                        <i class="fa-solid fa-user-plus"></i> Add Celebrity
+                    </button>
+                    <button onclick="openModal('uploadZipModal')" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 flex items-center gap-1.5 border border-slate-700">
+                        <i class="fa-solid fa-file-zipper"></i> Import ZIP
+                    </button>
+                </div>
+            </div>
+
+            <!-- Dataset Stats Counter -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-dark-900 border border-slate-800 rounded-xl p-4 flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-user-tag"></i>
+                    </div>
+                    <div>
+                        <span class="text-xs text-slate-400">Total Celebrities</span>
+                        <div id="statTotalCelebs" class="text-xl font-black text-white">18</div>
+                    </div>
+                </div>
+
+                <div class="bg-dark-900 border border-slate-800 rounded-xl p-4 flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-images"></i>
+                    </div>
+                    <div>
+                        <span class="text-xs text-slate-400">Total Valid Reference Images</span>
+                        <div id="statTotalImages" class="text-xl font-black text-white">72</div>
+                    </div>
+                </div>
+
+                <div class="bg-dark-900 border border-slate-800 rounded-xl p-4 flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-fingerprint"></i>
+                    </div>
+                    <div>
+                        <span class="text-xs text-slate-400">Embedding Vector Dimension</span>
+                        <div class="text-xl font-black text-white font-mono">512-D L2 Norm</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Celebrities Card Grid -->
+            <div id="celebritiesGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                <!-- Rendered dynamically via JS -->
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- TAB 4: PERFORMANCE GRAPHS & HISTORY -->
+        <!-- ========================================== -->
+        <section id="tab-graphs" class="tab-content hidden space-y-6">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+                <div>
+                    <h2 class="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+                        <i class="fa-solid fa-chart-line text-cyan-400"></i> Interactive Performance Graphs
+                    </h2>
+                    <p class="text-sm text-slate-400">
+                        Empirical comparison curves across batch sizes and workload dimensions.
+                    </p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Graph 1: Inference Time vs Batch Size -->
+                <div class="bg-dark-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+                    <h3 class="font-bold text-sm text-slate-200 mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-clock text-cpu"></i> CPU vs GPU Latency across Batch Size (ms)
+                    </h3>
+                    <div class="h-64">
+                        <canvas id="chartLatency"></canvas>
+                    </div>
+                </div>
+
+                <!-- Graph 2: Throughput vs Batch Size -->
+                <div class="bg-dark-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+                    <h3 class="font-bold text-sm text-slate-200 mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-gauge text-gpu"></i> Inference Throughput (Images/sec)
+                    </h3>
+                    <div class="h-64">
+                        <canvas id="chartThroughput"></canvas>
+                    </div>
+                </div>
+
+                <!-- Graph 3: Speedup Curve -->
+                <div class="bg-dark-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+                    <h3 class="font-bold text-sm text-slate-200 mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-rocket text-indigo-400"></i> GPU Acceleration Speedup Factor (CPU Time / GPU Time)
+                    </h3>
+                    <div class="h-64">
+                        <canvas id="chartSpeedup"></canvas>
+                    </div>
+                </div>
+
+                <!-- Graph 4: Memory Usage -->
+                <div class="bg-dark-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+                    <h3 class="font-bold text-sm text-slate-200 mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-memory text-amber-400"></i> Memory Footprint Comparison (MB)
+                    </h3>
+                    <div class="h-64">
+                        <canvas id="chartMemory"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Benchmark History Table -->
+            <div class="bg-dark-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-3">
+                <div class="flex items-center justify-between">
+                    <h3 class="font-bold text-sm text-slate-200 flex items-center gap-2">
+                        <i class="fa-solid fa-clock-rotate-left text-slate-400"></i> Historical Experiment Runs
+                    </h3>
+                    <span class="text-xs text-slate-500" id="historyCount">0 runs stored</span>
+                </div>
+                <div class="overflow-x-auto max-h-72">
+                    <table class="w-full text-xs text-left">
+                        <thead class="text-[11px] uppercase tracking-wider text-slate-400 bg-slate-950 border-b border-slate-800 sticky top-0">
+                            <tr>
+                                <th class="p-2.5">ID</th>
+                                <th class="p-2.5">Timestamp</th>
+                                <th class="p-2.5">Workload</th>
+                                <th class="p-2.5">Batch</th>
+                                <th class="p-2.5 text-cpu">CPU Latency</th>
+                                <th class="p-2.5 text-gpu">GPU Latency</th>
+                                <th class="p-2.5">Speedup</th>
+                                <th class="p-2.5">Winner</th>
+                                <th class="p-2.5">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTableBody" class="divide-y divide-slate-800/60 font-mono">
+                            <tr><td colspan="9" class="p-4 text-center text-slate-600">No benchmark history yet.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- TAB 5: COMPUTER ORGANIZATION & ARCHITECTURE -->
+        <!-- ========================================== -->
+        <section id="tab-coa" class="tab-content hidden space-y-6">
+            <div class="pb-2 border-b border-slate-800">
+                <h2 class="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+                    <i class="fa-solid fa-network-wired text-purple-400"></i> Computer Organization and Architecture (COA) Visualizer
+                </h2>
+                <p class="text-sm text-slate-400">
+                    Interactive structural diagrams of CPU vs GPU processing units, memory hierarchy, and CNN Multiply-and-Accumulate (MAC) dataflows.
+                </p>
+            </div>
+
+            <!-- CPU vs GPU Architecture Block Diagrams -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- CPU Architecture Card -->
+                <div class="bg-dark-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-bold text-base text-cpu flex items-center gap-2">
+                            <i class="fa-solid fa-microchip"></i> CPU Architecture (Latency-Oriented)
+                        </h3>
+                        <span class="text-xs px-2 py-0.5 rounded bg-cpu/20 text-cpu font-mono">13th Gen Intel Core i5-13500H</span>
+                    </div>
+
+                    <!-- Visual Block Diagram -->
+                    <div class="border border-slate-800 rounded-xl p-4 bg-slate-950/80 space-y-3">
+                        <div class="p-2 bg-indigo-950/50 border border-indigo-700/50 rounded-lg text-center font-bold text-xs text-indigo-300">
+                            Control Unit (Out-of-Order Branch Predictor, Instruction Decoder)
+                        </div>
+
+                        <!-- Cores Grid -->
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <div class="p-2.5 bg-slate-900 border border-slate-800 rounded-lg">
+                                <span class="font-bold text-cpu block mb-1">Performance Cores (P-Cores)</span>
+                                <div class="space-y-1 text-[11px] text-slate-400">
+                                    <div class="bg-slate-950 p-1 rounded">ALU + AVX2 / VNNI Vector Unit</div>
+                                    <div class="bg-slate-950 p-1 rounded">Register File (64-bit / 256-bit YMM)</div>
+                                    <div class="bg-slate-950 p-1 rounded text-cyan-300">L1 Data (48KB) + L1 Inst (32KB)</div>
+                                    <div class="bg-slate-950 p-1 rounded text-cyan-300">L2 Dedicated Cache (1.25MB)</div>
+                                </div>
+                            </div>
+                            <div class="p-2.5 bg-slate-900 border border-slate-800 rounded-lg">
+                                <span class="font-bold text-purple-400 block mb-1">Efficient Cores (E-Cores)</span>
+                                <div class="space-y-1 text-[11px] text-slate-400">
+                                    <div class="bg-slate-950 p-1 rounded">High-Throughput Scalar ALU</div>
+                                    <div class="bg-slate-950 p-1 rounded">Integer & SIMD Pipelines</div>
+                                    <div class="bg-slate-950 p-1 rounded text-purple-300">L1 Data & Inst Caches</div>
+                                    <div class="bg-slate-950 p-1 rounded text-purple-300">Shared L2 Cache Cluster</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-2 bg-slate-900 border border-cyan-800/40 rounded-lg text-center text-xs text-cyan-300 font-mono">
+                            Shared L3 Cache / Last Level Cache (LLC) - 18 MB Smart Cache
+                        </div>
+                    </div>
+
+                    <div class="mt-4 text-xs text-slate-400 space-y-1.5 leading-relaxed">
+                        <p><strong class="text-white">Design Philosophy:</strong> Optimized for minimizing single-thread instruction latency using deep execution pipelines, speculative execution, aggressive branch prediction, and massive low-latency caches.</p>
+                    </div>
+                </div>
+
+                <!-- GPU Architecture Card -->
+                <div class="bg-dark-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-bold text-base text-gpu flex items-center gap-2">
+                            <i class="fa-solid fa-bolt"></i> Intel Iris Xe GPU Architecture (Throughput-Oriented)
+                        </h3>
+                        <span class="text-xs px-2 py-0.5 rounded bg-gpu/20 text-gpu font-mono">80-96 Execution Units (EUs)</span>
+                    </div>
+
+                    <!-- Visual Block Diagram -->
+                    <div class="border border-slate-800 rounded-xl p-4 bg-slate-950/80 space-y-3">
+                        <div class="p-2 bg-emerald-950/50 border border-emerald-700/50 rounded-lg text-center font-bold text-xs text-emerald-300">
+                            Global Thread Dispatcher & Command Streamer
+                        </div>
+
+                        <!-- Subslice Grid -->
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <div class="p-2.5 bg-slate-900 border border-slate-800 rounded-lg">
+                                <span class="font-bold text-gpu block mb-1">Subslice 0 (16 EUs)</span>
+                                <div class="grid grid-cols-4 gap-1 text-[10px] text-center font-mono">
+                                    <div class="bg-slate-950 p-1 rounded border border-emerald-900 text-emerald-400">EU 1</div>
+                                    <div class="bg-slate-950 p-1 rounded border border-emerald-900 text-emerald-400">EU 2</div>
+                                    <div class="bg-slate-950 p-1 rounded border border-emerald-900 text-emerald-400">EU 3</div>
+                                    <div class="bg-slate-950 p-1 rounded border border-emerald-900 text-emerald-400">...</div>
+                                </div>
+                                <div class="mt-1.5 bg-slate-950 p-1 rounded text-[10px] text-slate-400 text-center">Shared Local Memory (SLM)</div>
+                            </div>
+
+                            <div class="p-2.5 bg-slate-900 border border-slate-800 rounded-lg">
+                                <span class="font-bold text-gpu block mb-1">Subslice 1 (16 EUs)</span>
+                                <div class="grid grid-cols-4 gap-1 text-[10px] text-center font-mono">
+                                    <div class="bg-slate-950 p-1 rounded border border-emerald-900 text-emerald-400">EU 17</div>
+                                    <div class="bg-slate-950 p-1 rounded border border-emerald-900 text-emerald-400">EU 18</div>
+                                    <div class="bg-slate-950 p-1 rounded border border-emerald-900 text-emerald-400">EU 19</div>
+                                    <div class="bg-slate-950 p-1 rounded border border-emerald-900 text-emerald-400">...</div>
+                                </div>
+                                <div class="mt-1.5 bg-slate-950 p-1 rounded text-[10px] text-slate-400 text-center">Shared Local Memory (SLM)</div>
+                            </div>
+                        </div>
+
+                        <div class="p-2 bg-slate-900 border border-emerald-800/40 rounded-lg text-center text-xs text-emerald-300 font-mono">
+                            GPU L3 Cache + Unified Shared Memory (USM) Interconnect
+                        </div>
+                    </div>
+
+                    <div class="mt-4 text-xs text-slate-400 space-y-1.5 leading-relaxed">
+                        <p><strong class="text-white">Design Philosophy:</strong> Optimized for total arithmetic throughput across massive parallel data. Each EU contains 2 SIMD ALUs executing vector operations simultaneously over thousands of parallel threads.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MEMORY HIERARCHY INTERACTIVE EXPLORER -->
+            <div class="bg-dark-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="font-bold text-base text-white flex items-center gap-2">
+                        <i class="fa-solid fa-cubes-stacked text-amber-400"></i> Memory Hierarchy & Access Latency
+                    </h3>
+                    <span class="text-xs text-slate-400">Locality of Reference & Data Reuse in CNN Inference</span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-3 text-center">
+                    <div class="p-3 rounded-xl bg-slate-950 border border-amber-500/40">
+                        <span class="text-[10px] uppercase font-bold text-amber-400">Registers</span>
+                        <div class="text-lg font-black text-white font-mono mt-1">&lt; 1 ns</div>
+                        <span class="text-[11px] text-slate-400 block mt-0.5">Capacity: ~few KB</span>
+                        <span class="text-[10px] text-amber-300 font-semibold block mt-1">Direct ALU operands</span>
+                    </div>
+
+                    <div class="p-3 rounded-xl bg-slate-950 border border-indigo-500/40">
+                        <span class="text-[10px] uppercase font-bold text-indigo-400">L1 Cache</span>
+                        <div class="text-lg font-black text-white font-mono mt-1">1 - 2 ns</div>
+                        <span class="text-[11px] text-slate-400 block mt-0.5">Capacity: 48 KB / core</span>
+                        <span class="text-[10px] text-indigo-300 font-semibold block mt-1">Per-core fast SRAM</span>
+                    </div>
+
+                    <div class="p-3 rounded-xl bg-slate-950 border border-cyan-500/40">
+                        <span class="text-[10px] uppercase font-bold text-cyan-400">L2 Cache</span>
+                        <div class="text-lg font-black text-white font-mono mt-1">3 - 6 ns</div>
+                        <span class="text-[11px] text-slate-400 block mt-0.5">Capacity: 1.25 MB / core</span>
+                        <span class="text-[10px] text-cyan-300 font-semibold block mt-1">Dedicated SRAM</span>
+                    </div>
+
+                    <div class="p-3 rounded-xl bg-slate-950 border border-purple-500/40">
+                        <span class="text-[10px] uppercase font-bold text-purple-400">L3 Cache (LLC)</span>
+                        <div class="text-lg font-black text-white font-mono mt-1">10 - 15 ns</div>
+                        <span class="text-[11px] text-slate-400 block mt-0.5">Capacity: 18 MB</span>
+                        <span class="text-[10px] text-purple-300 font-semibold block mt-1">Shared ring bus</span>
+                    </div>
+
+                    <div class="p-3 rounded-xl bg-slate-950 border border-rose-500/40">
+                        <span class="text-[10px] uppercase font-bold text-rose-400">Main DDR5 RAM</span>
+                        <div class="text-lg font-black text-white font-mono mt-1">60 - 90 ns</div>
+                        <span class="text-[11px] text-slate-400 block mt-0.5">Capacity: 16 GB</span>
+                        <span class="text-[10px] text-rose-300 font-semibold block mt-1">DRAM Bus (USM shared)</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-4 border-t border-slate-800 text-xs text-slate-300 leading-relaxed">
+                    <div class="space-y-2">
+                        <h4 class="font-bold text-white flex items-center gap-1.5">
+                            <i class="fa-solid fa-check-double text-emerald-400"></i> Spatial & Temporal Locality in CNNs
+                        </h4>
+                        <p><strong>Spatial Locality:</strong> Adjacent pixels in a face crop (112×112) are loaded into cache lines (64 bytes) consecutively. When a 3×3 convolution kernel processes pixel $(x, y)$, subsequent pixels $(x+1, y)$ are already present in L1 cache.</p>
+                        <p><strong>Temporal Locality:</strong> CNN weights (e.g., 512 filters of size $3 \times 3 \times 64$) are applied repeatedly across the entire spatial feature map. Caching the filter weights prevents continuous DRAM memory stalls.</p>
+                    </div>
+
+                    <div class="space-y-2">
+                        <h4 class="font-bold text-white flex items-center gap-1.5">
+                            <i class="fa-solid fa-triangle-exclamation text-amber-400"></i> The Memory Wall & Cache Miss Penalties
+                        </h4>
+                        <p>When the working set exceeds L3 cache capacity (e.g. large batch sizes with tens of millions of intermediate activation tensors), the processor experiences <strong>cache misses</strong>, forcing 60-90ns roundtrips to system DRAM.</p>
+                        <p>GPUs utilize <strong>massive multithreading</strong> to hide this latency: while Thread 0 waits for DRAM memory fetch, the EU thread scheduler instantly swaps in Thread 1 to execute compute instructions without wasting ALU clock cycles.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CNN Multiply-and-Accumulate (MAC) Computational Pipeline -->
+            <div class="bg-dark-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
+                <h3 class="font-bold text-base text-white flex items-center gap-2">
+                    <i class="fa-solid fa-calculator text-indigo-400"></i> CNN Computational Flow & Multiply-and-Accumulate (MAC) Operations
+                </h3>
+
+                <div class="flex flex-col md:flex-row items-center justify-between gap-3 text-center text-xs">
+                    <div class="p-3 bg-slate-950 border border-slate-800 rounded-xl flex-1">
+                        <span class="font-bold text-slate-200 block">Input Tensor</span>
+                        <span class="text-indigo-400 font-mono mt-1 block">[B, 3, 112, 112]</span>
+                        <span class="text-[10px] text-slate-500 mt-1 block">RGB Normalized Face</span>
+                    </div>
+                    <i class="fa-solid fa-arrow-right text-slate-600 hidden md:block"></i>
+
+                    <div class="p-3 bg-slate-950 border border-slate-800 rounded-xl flex-1">
+                        <span class="font-bold text-slate-200 block">Conv2D + Batch Normalization</span>
+                        <span class="text-cpu font-mono mt-1 block">y = &Sigma;(W &times; X) + B</span>
+                        <span class="text-[10px] text-slate-500 mt-1 block">Millions of MACs</span>
+                    </div>
+                    <i class="fa-solid fa-arrow-right text-slate-600 hidden md:block"></i>
+
+                    <div class="p-3 bg-slate-950 border border-slate-800 rounded-xl flex-1">
+                        <span class="font-bold text-slate-200 block">Activation & Pooling</span>
+                        <span class="text-amber-400 font-mono mt-1 block">max(0, x) / PReLU</span>
+                        <span class="text-[10px] text-slate-500 mt-1 block">Non-linear feature extraction</span>
+                    </div>
+                    <i class="fa-solid fa-arrow-right text-slate-600 hidden md:block"></i>
+
+                    <div class="p-3 bg-slate-950 border border-slate-800 rounded-xl flex-1">
+                        <span class="font-bold text-slate-200 block">Deep ResNet Residual Blocks</span>
+                        <span class="text-purple-400 font-mono mt-1 block">F(x) + x</span>
+                        <span class="text-[10px] text-slate-500 mt-1 block">High-level facial representation</span>
+                    </div>
+                    <i class="fa-solid fa-arrow-right text-slate-600 hidden md:block"></i>
+
+                    <div class="p-3 bg-slate-950 border border-slate-800 rounded-xl flex-1">
+                        <span class="font-bold text-slate-200 block">Face Embedding</span>
+                        <span class="text-gpu font-mono mt-1 block">512-D L2 Vector</span>
+                        <span class="text-[10px] text-slate-500 mt-1 block">Cosine Similarity matching</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- TAB 6: PARALLEL SIMULATOR -->
+        <!-- ========================================== -->
+        <section id="tab-parallel" class="tab-content hidden space-y-6">
+            <div class="pb-2 border-b border-slate-800">
+                <h2 class="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+                    <i class="fa-solid fa-arrows-split-up-and-left text-rose-400"></i> Parallel Processing Interactive Simulator
+                </h2>
+                <p class="text-sm text-slate-400">
+                    Animated sequential vs parallel execution simulator demonstrating how GPU vector SIMD lanes eliminate batch bottlenecks.
+                </p>
+            </div>
+
+            <div class="bg-dark-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
+                <!-- Controls -->
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3 text-xs">
+                        <span class="text-slate-400">Select Task Batch:</span>
+                        <div class="flex space-x-1.5" id="simBatchSelector">
+                            <button onclick="setSimTasks(4)" class="px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold active-sim-btn">4 Faces</button>
+                            <button onclick="setSimTasks(8)" class="px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold">8 Faces</button>
+                            <button onclick="setSimTasks(16)" class="px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold">16 Faces</button>
+                        </div>
+                    </div>
+
+                    <button onclick="runParallelSimulation()" class="px-5 py-2 bg-gradient-to-r from-rose-600 to-indigo-600 hover:from-rose-500 hover:to-indigo-500 text-xs font-bold text-white rounded-xl shadow-lg shadow-rose-600/20 flex items-center gap-2 transition-all">
+                        <i class="fa-solid fa-play"></i> Start Animated Execution
+                    </button>
+                </div>
+
+                <!-- Simulation Visual Canvas -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Sequential (CPU) -->
+                    <div class="p-5 rounded-xl bg-slate-950 border border-cpu/40 space-y-3">
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="font-bold text-cpu flex items-center gap-1.5">
+                                <i class="fa-solid fa-arrow-down-1-9"></i> Sequential Processing (CPU Pipeline)
+                            </span>
+                            <span id="seqElapsed" class="font-mono text-slate-400">0.0 ms</span>
+                        </div>
+                        <p class="text-[11px] text-slate-400">
+                            Executes one face convolution at a time. Total Time = $T_1 + T_2 + T_3 + \dots + T_N$.
+                        </p>
+                        <div id="seqContainer" class="space-y-2 py-2">
+                            <!-- Tasks injected here -->
+                        </div>
+                    </div>
+
+                    <!-- Parallel (GPU) -->
+                    <div class="p-5 rounded-xl bg-slate-950 border border-gpu/40 space-y-3">
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="font-bold text-gpu flex items-center gap-1.5">
+                                <i class="fa-solid fa-bars-staggered"></i> Parallel SIMD Processing (GPU Iris Xe EUs)
+                            </span>
+                            <span id="parElapsed" class="font-mono text-slate-400">0.0 ms</span>
+                        </div>
+                        <p class="text-[11px] text-slate-400">
+                            Executes all face convolutions concurrently across vector execution lanes. Total Time $\approx \max(T_i) + \text{dispatch}$.
+                        </p>
+                        <div id="parContainer" class="space-y-2 py-2">
+                            <!-- Tasks injected here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800 bg-dark-900 py-4 px-6 text-center text-xs text-slate-500 mt-auto">
+        <p>CPU vs GPU Acceleration of CNN-Based Telugu Celebrity Face Recognition | Academic Computer Architecture Performance Analysis</p>
+    </footer>
+
+    <!-- MODAL: ADD CELEBRITY -->
+    <div id="addCelebModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-dark-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+                <h3 class="font-bold text-base text-white">Register New Celebrity</h3>
+                <button onclick="closeModal('addCelebModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="addCelebForm" onsubmit="submitAddCelebrity(event)" class="space-y-4 mt-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Celebrity Full Name *</label>
+                    <input type="text" id="newCelebName" required placeholder="e.g. Venkatesh Daggubati" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-sm text-white focus:outline-none focus:border-brand-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Notes / Description</label>
+                    <input type="text" id="newCelebNotes" placeholder="e.g. Veteran Telugu Cinema Star" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-sm text-white focus:outline-none focus:border-brand-500">
+                </div>
+                <button type="submit" class="w-full py-2.5 bg-brand-600 hover:bg-brand-500 text-white font-bold rounded-xl text-xs shadow-md transition-all">
+                    Register Identity
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: UPLOAD ZIP DATASET -->
+    <div id="uploadZipModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-dark-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+                <h3 class="font-bold text-base text-white">Import ZIP Dataset</h3>
+                <button onclick="closeModal('uploadZipModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="mt-4 space-y-4 text-xs text-slate-400">
+                <p>Upload a structured <code>.zip</code> file containing subfolders named after celebrities (e.g. <code>Vijay_Deverakonda/</code>) with their images.</p>
+                <input type="file" id="zipFileInput" accept=".zip" class="w-full text-xs text-slate-400 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-brand-600 file:text-white hover:file:bg-brand-500">
+                <button onclick="submitZipUpload()" class="w-full py-2.5 bg-brand-600 hover:bg-brand-500 text-white font-bold rounded-xl text-xs shadow-md transition-all">
+                    Upload & Extract Dataset
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JS Application Scripts -->
+    <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,57 @@
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Credentials and private local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.ppk
+id_rsa*
+id_ed25519*
+.aws/
+.ssh/
+.npmrc
+.pypirc
+.vscode/settings.json
+
+# Python environments and tool caches
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Local data, biometric images, and generated output
+dataset/
+database/*.db
+database/*.sqlite
+database/*.sqlite3
+database/*.db-journal
+logs/
+graphs/
+results/
+
+# Build output and temporary files
+build/
+dist/
+*.egg-info/
+*.tmp
+*.temp
+*.part
+*.swp
+*.bak
+*.log
+kernel.errors.txt
+~$*
+
+# OS metadata
+.DS_Store
+Thumbs.db

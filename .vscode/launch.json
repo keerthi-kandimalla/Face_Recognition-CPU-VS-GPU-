@@ -1,0 +1,12 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Launch Face Recognition Accelerator",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/run_server.py",
+            "console": "integratedTerminal"
+        }
+    ]
+}

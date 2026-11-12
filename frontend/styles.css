@@ -1,0 +1,48 @@
+/* Custom Styles for Face Recognition Accelerator */
+
+/* Active Tab Styles */
+.tab-btn {
+    color: #94a3b8;
+}
+.tab-btn:hover {
+    color: #f8fafc;
+    background-color: rgba(30, 41, 59, 0.7);
+}
+.tab-btn.active {
+    color: #ffffff;
+    background-color: #1e293b;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+    border-bottom: 2px solid #6366f1;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: #0f172a;
+}
+::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #475569;
+}
+
+/* Simulator animations */
+@keyframes pulseTask {
+    0% { transform: scale(1); opacity: 0.9; }
+    50% { transform: scale(1.02); opacity: 1; }
+    100% { transform: scale(1); opacity: 0.9; }
+}
+
+.sim-running {
+    animation: pulseTask 0.8s infinite ease-in-out;
+}
+
+.active-sim-btn {
+    background-color: #4f46e5 !important;
+    color: #ffffff !important;
+}

@@ -13,7 +13,7 @@ This research engineering project combines:
 - **Computer Vision & Face Biometrics**
 - **Hardware Acceleration & Parallel Processing**
 
-The system investigates how underlying processor architectures impact real-world deep neural network workloads. Specifically, it contrasts **latency-optimized sequential multicore CPUs** (Intel Core i5-13500H) against **throughput-optimized massively parallel vector Execution Units (EUs)** on integrated GPUs (Intel Iris Xe Graphics) using **Intel OpenVINO** and **DirectX 12 DirectML**.
+The system investigates how underlying processor architectures impact real-world deep neural network workloads. Specifically, it contrasts **latency-optimized sequential multicore CPUs** (Intel Core i5-13500H) against **throughput-optimized massively parallel vector Execution Units (EUs)** on integrated GPUs (Intel Iris Xe Graphics) using **Intel OpenVINO** and **DirectX 12 DirectML**
 
 ---
 
@@ -33,7 +33,7 @@ The system investigates how underlying processor architectures impact real-world
 
 ```
 face__recognition/
-├── dataset/                    # Telugu Celebrity Dataset Folders
+├── dataset/                    
 │   ├── Vijay_Deverakonda/
 │   ├── Allu_Arjun/
 │   ├── Jr_NTR/
